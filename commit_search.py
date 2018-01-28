@@ -8,15 +8,24 @@ import requests
 
 class CommitSearch(object):
     src_url = 'https://chromium.googlesource.com'
-    log_path = '/chromium/src/+log/'
-    commit_path = '/chromium/src/+/'
+    cr_log_path = '/chromium/src/+log/'
+    cr_commit_path = '/chromium/src/+/'
+    v8_log_path = '/v8/v8/+log/'
+    v8_commit_path = '/v8/v8/+/'
 
-    def __init__(self, version, bug):
+    def __init__(self, version, bug, product, max_pages):
+        self.page_counter = max_pages
         self.found = False
         self.commits = set()
         self.id = bug
-        self.rel_url = self.src_url + self.log_path + version
-        self.commit_url = self.src_url + self.commit_path
+        if product == 'chromium':
+            self.rel_url = self.src_url + self.cr_log_path + version
+            self.commit_url = self.src_url + self.cr_commit_path
+
+        if product == 'v8':
+            self.rel_url = self.src_url + self.v8_log_path + version
+            self.commit_url = self.src_url + self.v8_commit_path
+
         self.bug_re = re.compile(self.id)
 
     def _find_bug_id(self, commits):
@@ -37,6 +46,7 @@ class CommitSearch(object):
         if self.found:
             return
 
+        self.page_counter -= 1
         next_id = log.get('next')
         commits = log.get('log')
         if commits:
@@ -45,7 +55,12 @@ class CommitSearch(object):
         if next_id:
             next_changelog_url = self.rel_url + '?s=' + next_id + '&format=JSON'
             next_log = json.loads(requests.get(next_changelog_url).content[4:])
-            self._parse_changelog(next_log)
+            if self.page_counter > 0:
+                try:
+                    self._parse_changelog(next_log)
+
+                except RuntimeError:
+                    return
 
     def find_bug_commit(self):
         changelog_url = self.rel_url + '/?format=JSON'
