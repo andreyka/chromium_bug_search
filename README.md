@@ -14,5 +14,5 @@ pip3 install -r requirements.txt
 python console.py -b 441275 -r 64.0.3282.119
 
 ```
-3. Get commit link.
+3. Get commit link
 
