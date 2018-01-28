@@ -18,6 +18,6 @@ if __name__ == '__main__':
         exit()
 
     else:
-        print('Commit found:')
+        print('[+] Commit found:')
         for item in commits:
             print(item)
