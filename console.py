@@ -15,13 +15,13 @@ if __name__ == '__main__':
     parser.add_argument('-mp', '--maxpages', help='Specify log pages limit, default vaule is 500',
                         type=int, default=500, required=False)
     args = parser.parse_args()
-    search = CommitSearch(args.rel, args.bug, args.prod, args.maxpages)
+    search = CommitSearch(args.prod, args.rel, args.bug, args.maxpages)
     commits = search.find_bug_commit()
     if not commits:
         print('[-] Nothing was found')
         exit()
 
     else:
-        print('[+] Commits found:')
+        print('[+] Commit found:')
         for item in commits:
             print(item)

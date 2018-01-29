@@ -13,11 +13,12 @@ class CommitSearch(object):
     v8_log_path = '/v8/v8/+log/'
     v8_commit_path = '/v8/v8/+/'
 
-    def __init__(self, version, bug, product, max_pages):
+    def __init__(self, product, version, bug, max_pages):
         self.page_counter = max_pages
         self.found = False
         self.commits = set()
         self.id = bug
+        self.bug_sbustrs = {'bug:', 'bug='}
         if product == 'chromium':
             self.rel_url = self.src_url + self.cr_log_path + version
             self.commit_url = self.src_url + self.cr_commit_path
@@ -26,7 +27,19 @@ class CommitSearch(object):
             self.rel_url = self.src_url + self.v8_log_path + version
             self.commit_url = self.src_url + self.v8_commit_path
 
-        self.bug_re = re.compile(self.id)
+        self.id_re = re.compile(r'\d+')
+
+    def _extract_bug_string(self, message):
+        for item in self.bug_sbustrs:
+            bug_pos = message.lower().find(item)
+            if bug_pos <= 0:
+                continue
+
+            bug_part = message[bug_pos:]
+            bug_string = bug_part.split('\n')[0]
+            return bug_string
+
+        return None
 
     def _find_bug_id(self, commits):
         for commit in commits:
@@ -34,13 +47,19 @@ class CommitSearch(object):
             if not message:
                 continue
 
-            matched = re.findall(self.bug_re, message)
+            bug_str = self._extract_bug_string(message)
+            if not bug_str:
+                continue
+
+            matched = re.findall(self.id_re, bug_str)
             if not matched:
                 continue
 
-            sha1 = commit.get('commit')
-            self.commits.add(self.commit_url + sha1)
-            self.found = True
+            for item in matched:
+                if item == self.id:
+                    sha1 = commit.get('commit')
+                    self.commits.add(self.commit_url + sha1)
+                    self.found = True
 
     def _parse_changelog(self, log):
         if self.found:
