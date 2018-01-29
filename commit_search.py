@@ -73,7 +73,12 @@ class CommitSearch(object):
 
         if next_id:
             next_changelog_url = self.rel_url + '?s=' + next_id + '&format=JSON'
-            next_log = json.loads(requests.get(next_changelog_url).content[4:])
+            try:
+                next_log = json.loads(requests.get(next_changelog_url).content[4:])
+
+            except json.JSONDecodeError:
+                return
+
             if self.page_counter > 0:
                 try:
                     self._parse_changelog(next_log)
@@ -83,6 +88,11 @@ class CommitSearch(object):
 
     def find_bug_commit(self):
         changelog_url = self.rel_url + '/?format=JSON'
-        log = json.loads(requests.get(changelog_url).content[4:])
+        try:
+            log = json.loads(requests.get(changelog_url).content[4:])
+
+        except json.JSONDecodeError:
+            return
+
         self._parse_changelog(log)
         return self.commits
